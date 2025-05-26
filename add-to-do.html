@@ -16,8 +16,11 @@
                 <input type="text" class="form-control" id="name" placeholder="Enter name of the task">
             </div>
             <div class="mb-3 d-flex flex-column">
-                <label for="description" class="form-label">Description</label>
-                 <textarea name="description" id="description" placeholder="Enter description of the task"></textarea>
+                <label for="status" class="form-label">Status:</label>
+                <select class="form-select" id="status" name="task-status">
+                    <option>Completed</option>
+                    <option>Pending</option>
+                </select>
             </div>
             <div>
                 <a href="index.html"><button class="btn btn-outline-success">Go back</button></a>
