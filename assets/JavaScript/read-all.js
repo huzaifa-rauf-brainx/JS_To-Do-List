@@ -9,9 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
     async function fetchTodos() {
         try {
             loader.classList.remove("d-none");
-            const response = await fetch("https://jsonplaceholder.typicode.com/users/1/todos");
-            if (!response.ok) throw new Error("Failed to fetch tasks");
-            const apiTodos = await response.json();
+            const cachedApiTodos = JSON.parse(localStorage.getItem("apiTodos"));
+            let apiTodos = [];
+            if (cachedApiTodos && Array.isArray(cachedApiTodos)) {
+                apiTodos = cachedApiTodos;
+            } else {
+                const response = await fetch("https://jsonplaceholder.typicode.com/users/1/todos");
+                if (!response.ok) throw new Error("Failed to fetch tasks");
+                apiTodos = await response.json();
+                localStorage.setItem("apiTodos", JSON.stringify(apiTodos));
+            }
             const localTodos = JSON.parse(localStorage.getItem("todos")) || [];
             const seen = new Set();
             allTasks = [...localTodos, ...apiTodos].filter(task => {
