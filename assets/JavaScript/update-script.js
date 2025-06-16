@@ -1,52 +1,64 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const updateBtn = document.getElementById("updateBtn");
+    const API_URL = "https://jsonplaceholder.typicode.com/todos";
+    const USER_ID = 1;
+    const TOAST_DISPLAY_DURATION = 3000;
+    const form = document.getElementById("updateTaskForm");
     const toast = document.getElementById("toast");
-    updateBtn.addEventListener("click", async () => {
-        const taskId = document.getElementById("taskId").value.trim();
+    const updateBtn = document.getElementById("updateBtn");
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const taskId = parseInt(document.getElementById("taskId").value.trim());
         const title = document.getElementById("name").value.trim();
         const status = document.getElementById("status").value;
-        if (!taskId || !title) {
-            showToast("Please fill in all the fields.", "danger");
+        if (!taskId || taskId < 1 || !title || title.length < 3 || !status) {
+            showToast("Please fill all fields with valid data.", "danger");
             return;
         }
         const updatedTask = {
-            id: parseInt(taskId),
+            id: taskId,
             title: title,
-            userId: 1,
+            userId: USER_ID,
             completed: status === "Completed"
         };
-        let localTodos = JSON.parse(localStorage.getItem("todos")) || [];
+        const localTodos = JSON.parse(localStorage.getItem("todos")) || [];
         const index = localTodos.findIndex(todo => todo.id === updatedTask.id);
-        if (index !== -1) {
-            localTodos[index].title = updatedTask.title;
-            localTodos[index].completed = updatedTask.completed;
-            localStorage.setItem("todos", JSON.stringify(localTodos));
-            showToast("Task updated in local storage!", "success");
-            return;
-        }
+        updateBtn.disabled = true;
+        updateBtn.textContent = "Updating...";
         try {
-            const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${taskId}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(updatedTask)
-            });
-            if (!response.ok) throw new Error("API update failed");
-            const data = await response.json();
-            showToast("Task updated unsing API!", "success");
-            console.log("Updated task:", data);
+            if (index !== -1) {
+                localTodos[index] = updatedTask;
+                localStorage.setItem("todos", JSON.stringify(localTodos));
+                showToast("Task updated in local storage!", "success");
+            } else {
+                const response = await fetch(`${API_URL}/${taskId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(updatedTask)
+                });
+                if (!response.ok) {
+                    throw new Error(`API responded with status ${response.status}`);
+                }
+                const data = await response.json();
+                console.log("Updated task via API:", data);
+                showToast("Task updated using API!", "success");
+            }
+            form.reset();
         } catch (error) {
-            showToast("Failed to update task.", "danger");
-            console.error(error);
+            console.error("Update failed:", error);
+            showToast("Failed to update task. Please try again.", "danger");
+        } finally {
+            updateBtn.disabled = false;
+            updateBtn.textContent = "Update Task";
         }
     });
     function showToast(message, type = "info") {
         toast.textContent = message;
-        toast.className = `alert alert-${type} mt-2`;
+        toast.className = `alert alert-${type} mt-3`;
         toast.classList.remove("d-none");
         setTimeout(() => {
             toast.classList.add("d-none");
-        }, 3000);
+        }, TOAST_DISPLAY_DURATION);
     }
 });
